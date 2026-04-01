@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rewards - EarnMate</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-header">
+
+  <h1>EarnMate</h1>
+
+  <div class="balance-pill">
+  </div>
+
+</div>
+
+<p style="padding:20px;">Convert your coins into rewards 💰</p>
+<div class="bottom-nav">
+  <a href="index.html" class="active">🏠<br>Surveys</a>
+  <a href="game.html">🎮<br>Games</a>
+  <a href="rewards.html">🎁<br>Rewards</a>
+  <a href="wallet.html">💸<br>Wallet</a>
+  <a href="community.html">💬<br>Community</a>
+  <a href="profile.html">👤<br>Profile</a>
+</div>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyA2dRpp6AuF3I8pEbhvwz-p-UkRW5bz0gw",
+    authDomain: "earnmate-web.firebaseapp.com",
+    projectId: "earnmate-web",
+    storageBucket: "earnmate-web.firebasestorage.app",
+    messagingSenderId: "216898263281",
+    appId: "1:216898263281:web:321cb52124f76c1fa77150",
+    measurementId: "G-062W69QPBB"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+<script src="script.js"></script>
+</body>
+</html>
