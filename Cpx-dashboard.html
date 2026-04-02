@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CPX Research – Publisher Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #07090f;
+    --surface:  #0e1320;
+    --border:   rgba(255,255,255,0.07);
+    --green:    #00e5a0;
+    --blue:     #4d9fff;
+    --amber:    #ffb830;
+    --red:      #ff5c7a;
+    --text:     #dce8ff;
+    --muted:    #5a6a8a;
+    --font:     'Outfit', sans-serif;
+    --mono:     'DM Mono', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+  }
+
+  .logo {
+    padding: 0 20px 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--green), var(--blue));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; margin-bottom: 10px;
+  }
+  .logo h1 { font-size: 14px; font-weight: 700; color: var(--text); }
+  .logo p  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 20px;
+    cursor: pointer;
+    font-size: 13px; font-weight: 500;
+    color: var(--muted);
+    border-left: 3px solid transparent;
+    transition: all .18s;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .nav-item.active { color: var(--green); border-left-color: var(--green); background: rgba(0,229,160,0.06); }
+  .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .nav-section { font-size: 10px; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted); padding: 18px 20px 6px; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .api-key-mini {
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px;
+    word-break: break-all; line-height: 1.5;
+  }
+  .api-key-mini span { display: block; font-size: 9px; color: var(--green); margin-bottom: 4px; font-weight: 700; letter-spacing:.08em; }
+
+  /* ── Main ── */
+  #main {
+    margin-left: 220px;
+    flex: 1;
+    padding: 40px 36px;
+    max-width: 1000px;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-header { margin-bottom: 32px; }
+  .page-header h2 { font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+  .page-header p  { font-size: 13px; color: var(--muted); line-height: 1.6; max-width: 560px; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card.green  { border-color: rgba(0,229,160,.25); box-shadow: 0 0 40px rgba(0,229,160,.05); }
+  .card.blue   { border-color: rgba(77,159,255,.25); box-shadow: 0 0 40px rgba(77,159,255,.05); }
+  .card.amber  { border-color: rgba(255,184,48,.25); box-shadow: 0 0 40px rgba(255,184,48,.05); }
+  .card.red    { border-color: rgba(255,92,122,.25); }
+
+  .card-title {
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+  }
+
+  /* ── Tags ── */
+  .tag {
+    display: inline-block;
+    font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; border-radius: 5px;
+    padding: 3px 9px; margin: 0 4px 4px 0;
+  }
+  .tag.green { background: rgba(0,229,160,.12); color: var(--green); border: 1px solid rgba(0,229,160,.3); }
+  .tag.blue  { background: rgba(77,159,255,.12); color: var(--blue);  border: 1px solid rgba(77,159,255,.3); }
+  .tag.amber { background: rgba(255,184,48,.12); color: var(--amber); border: 1px solid rgba(255,184,48,.3); }
+  .tag.red   { background: rgba(255,92,122,.12); color: var(--red);   border: 1px solid rgba(255,92,122,.3); }
+  .tag.main  { background: rgba(0,229,160,.18); color: var(--green);  border: 1px solid rgba(0,229,160,.5); }
+
+  /* ── URL blocks ── */
+  .url-block {
+    background: #060910;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 10px 0;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .url-text {
+    font-family: var(--mono); font-size: 12px; color: #6ab0ff;
+    flex: 1; word-break: break-all; line-height: 1.6;
+  }
+  .url-text .param { color: var(--amber); }
+  .url-text .val   { color: var(--green); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    border: none; border-radius: 9px; cursor: pointer;
+    font-family: var(--font); font-size: 13px; font-weight: 600;
+    padding: 10px 20px; transition: all .18s;
+  }
+  .btn-green { background: var(--green); color: #07090f; }
+  .btn-green:hover { background: #00ffb3; }
+  .btn-ghost {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.09); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  .copy-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; color: var(--muted); cursor: pointer;
+    font-family: var(--font); font-size: 10px; font-weight: 700;
+    letter-spacing: .08em; padding: 4px 11px;
+    transition: all .18s; white-space: nowrap;
+  }
+  .copy-btn:hover, .copy-btn.copied {
+    background: rgba(0,229,160,.12);
+    border-color: rgba(0,229,160,.4);
+    color: var(--green);
+  }
+
+  /* ── Inputs ── */
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block; font-size: 11px; font-weight: 700;
+    letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 7px;
+  }
+  .field input, .field select {
+    width: 100%; background: #060910;
+    border: 1px solid var(--border); border-radius: 9px;
+    color: var(--text); font-family: var(--mono); font-size: 13px;
+    padding: 10px 14px; outline: none; transition: border-color .18s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--green); }
+  .field input::placeholder { color: var(--muted); }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* ── Postback params table ── */
+  .param-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .param-table th {
+    text-align: left; font-size: 10px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .param-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: top; line-height: 1.5;
+  }
+  .param-table tr:last-child td { border-bottom: none; }
+  .param-name { font-family: var(--mono); color: var(--amber); font-size: 12px; }
+  .param-desc { color: #9ab; font-size: 12px; }
+
+  /* ── Results ── */
+  #result-box {
+    background: #060910;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 16px;
+    max-height: 360px;
+    overflow-y: auto;
+    display: none;
+  }
+  #result-box pre {
+    font-family: var(--mono); font-size: 12px;
+    color: #8bbcdd; white-space: pre-wrap; word-break: break-word;
+  }
+  #result-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  #result-count { font-size: 12px; color: var(--muted); }
+
+  /* ── Alert ── */
+  .alert {
+    display: flex; gap: 12px; align-items: flex-start;
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;
+    font-size: 13px; line-height: 1.6;
+  }
+  .alert.warn { background: rgba(255,184,48,.08); border: 1px solid rgba(255,184,48,.3); color: #ffd68a; }
+  .alert.info { background: rgba(77,159,255,.08); border: 1px solid rgba(77,159,255,.3); color: #9ec8ff; }
+  .alert-icon { font-size: 16px; margin-top: 1px; }
+
+  /* ── Spinner ── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.15);
+    border-top-color: var(--green);
+    animation: spin .7s linear infinite;
+    display: inline-block;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1e3050; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <h1>CPX Research</h1>
+    <p>Publisher Dashboard</p>
+  </div>
+
+  <div class="nav-section">Integration</div>
+  <div class="nav-item active" onclick="show('postback')">
+    <span class="nav-icon">⇄</span> Postback Setup
+  </div>
+
+  <div class="nav-section">Statistics API</div>
+  <div class="nav-item" onclick="show('completes')">
+    <span class="nav-icon">✓</span> Completes
+  </div>
+  <div class="nav-item" onclick="show('outs')">
+    <span class="nav-icon">✕</span> Screen Outs
+  </div>
+  <div class="nav-item" onclick="show('validate')">
+    <span class="nav-icon">◎</span> Validate TX
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="api-key-mini">
+      <span>Your API Key</span>
+      6359e5f2de9cdff58131a70b4d515c50
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<main id="main">
+
+  <!-- ── POSTBACK ── -->
+  <section class="page active" id="page-postback">
+    <div class="page-header">
+      <h2>Postback Setup</h2>
+      <p>The postback is your <strong>primary method</strong> to credit users. CPX Research calls your server URL every time a user completes or screens out of a survey.</p>
+    </div>
+
+    <div class="alert warn">
+      <span class="alert-icon">⚠</span>
+      <div>Do <strong>not</strong> use the Statistics API as your main payment method. Use the postback function as primary integration — the API is only for occasional verification (e.g. once per hour).</div>
+    </div>
+
+    <div class="card green">
+      <div class="card-title"><span class="dot" style="background:var(--green)"></span>Your Postback URL Structure</div>
+      <div class="url-block">
+        <div class="url-text">
+          https://yourdomain.com/postback<span class="param">?transaction_id=</span><span class="val">{transaction_id}</span><span class="param">&status=</span><span class="val">{status}</span><span class="param">&amount=</span><span class="val">{amount}</span><span class="param">&app_id=</span><span class="val">{app_id}</span>
+        </div>
+        <button class="copy-btn" onclick="copyBtn(this, 'https://yourdomain.com/postback?transaction_id={transaction_id}&status={status}&amount={amount}&app_id={app_id}')">COPY</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;">Replace <code style="color:var(--amber);font-family:var(--mono)">yourdomain.com/postback</code> with your actual endpoint. CPX will send a GET request to this URL for every event.</p>
+    </div>
+
+    <div class="card blue">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Postback Parameters</div>
+      <table class="param-table">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="param-name">{transaction_id}</td>
+            <td class="param-desc">Unique ID for this event. Use to prevent double-crediting.</td>
+            <td><span class="tag blue">TX_abc123</span></td>
+          </tr>
+          <tr>
+            <td class="param-name">{status}</td>
+            <td class="param-desc"><code style="color:var(--green);font-family:var(--mono)">1</code> = Complete &nbsp; <code style="color:var(--red);font-family:var(--mono)">2</code> = Screen Out</td>
+            <td><span class="tag green">1</span> <span class="tag red">2</span></td>
+          </tr>
+          <tr>
+            <td class="param-name">{amount}</td>
+            <td class="param-desc">Reward amount in your currency/points to credit the user.</td>
+            <td><span class="tag amber">0.50</span></td>
+          </tr>
+          <tr>
+            <td class="param-name">{app_id}</td>
+            <td class="param-desc">Your app ID from the CPX dashboard.</td>
+            <td><span class="tag blue">12345</span></td>
+          </tr>
+          <tr>
+            <td class="param-name">{user_id}</td>
+            <td class="param-desc">The user's ID in your system (you passed this when opening surveys).</td>
+            <td><span class="tag blue">user_99</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--amber)"></span>Validate Before Crediting</div>
+      <div class="alert info" style="margin-bottom:0">
+        <span class="alert-icon">ℹ</span>
+        <div>Before crediting a user from a postback, always validate the <code style="font-family:var(--mono);color:var(--amber)">transaction_id</code> via the API to prevent fraud. Switch to the <strong>Validate TX</strong> tab to test this.</div>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="card-title" style="margin-bottom:10px;">Example server-side handler (Node.js)</div>
+        <div class="url-block" style="display:block">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span style="font-size:11px;color:var(--muted);">server.js</span>
+            <button class="copy-btn" onclick="copyBtn(this, `app.get('/postback', async (req, res) => {\n  const { transaction_id, status, amount, user_id } = req.query;\n\n  // 1. Validate with CPX API\n  const check = await fetch(\`https://publisher.cpx-research.com/index.php?page=api-check-transaction-id&transaction_id=\${transaction_id}&api_key=YOUR_KEY\`);\n  const data = await check.json();\n  if (!data.valid) return res.sendStatus(400);\n\n  // 2. Prevent duplicate crediting\n  if (await alreadyCredited(transaction_id)) return res.sendStatus(200);\n\n  // 3. Credit the user\n  if (status === '1') await creditUser(user_id, amount); // complete\n  if (status === '2') await creditUser(user_id, amount * 0.1); // screen out bonus\n\n  res.sendStatus(200); // always respond 200\n});`)">COPY</button>
+          </div>
+          <pre style="font-family:var(--mono);font-size:12px;color:#6ab0ff;line-height:1.7;white-space:pre-wrap;">app.<span style="color:var(--green)">get</span>(<span style="color:#e5a">'<span style="color:var(--amber)">/postback</span>'</span>, <span style="color:var(--green)">async</span> (req, res) => {
+  <span style="color:var(--muted)">// Extract postback params</span>
+  <span style="color:var(--green)">const</span> { transaction_id, status, amount, user_id } = req.query;
+
+  <span style="color:var(--muted)">// 1. Validate transaction with CPX API</span>
+  <span style="color:var(--green)">const</span> check = <span style="color:var(--green)">await</span> fetch(<span style="color:#e5a">`...api-check-transaction-id&transaction_id=<span style="color:var(--amber)">${transaction_id}</span>`</span>);
+  <span style="color:var(--green)">const</span> data  = <span style="color:var(--green)">await</span> check.json();
+  <span style="color:var(--green)">if</span> (!data.valid) <span style="color:var(--green)">return</span> res.sendStatus(<span style="color:var(--amber)">400</span>);
+
+  <span style="color:var(--muted)">// 2. Prevent duplicate crediting (check your DB)</span>
+  <span style="color:var(--green)">if</span> (<span style="color:var(--green)">await</span> alreadyCredited(transaction_id)) <span style="color:var(--green)">return</span> res.sendStatus(<span style="color:var(--amber)">200</span>);
+
+  <span style="color:var(--muted)">// 3. Credit the user based on status</span>
+  <span style="color:var(--green)">if</span> (status === <span style="color:#e5a">'1'</span>) <span style="color:var(--green)">await</span> creditUser(user_id, amount);   <span style="color:var(--muted)">// complete</span>
+  <span style="color:var(--green)">if</span> (status === <span style="color:#e5a">'2'</span>) <span style="color:var(--green)">await</span> creditUser(user_id, amount * <span style="color:var(--amber)">0.1</span>); <span style="color:var(--muted)">// screen out</span>
+
+  res.sendStatus(<span style="color:var(--amber)">200</span>); <span style="color:var(--muted)">// always return 200 to CPX</span>
+});</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── COMPLETES ── -->
+  <section class="page" id="page-completes">
+    <div class="page-header">
+      <h2>Completes <span class="tag green" style="vertical-align:middle;margin-left:8px;">Verification Only</span></h2>
+      <p>Fetch a list of completed surveys within a date range. Use this for hourly reconciliation — not as your primary crediting method.</p>
+    </div>
+    <div class="alert warn">
+      <span class="alert-icon">⚠</span>
+      Max <strong>20,000 results</strong> per API call. Narrow your date range if you expect large volumes.
+    </div>
+    <div class="card">
+      <div class="row2">
+        <div class="field">
+          <label>Start Date</label>
+          <input type="date" id="c-start" value="2020-06-01" />
+        </div>
+        <div class="field">
+          <label>End Date</label>
+          <input type="date" id="c-end" value="2020-06-01" />
+        </div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Generated URL</div>
+        <div class="url-block">
+          <div class="url-text" id="c-url-display">—</div>
+          <button class="copy-btn" id="c-copy-btn" onclick="copyBtn(this, document.getElementById('c-url-display').innerText)">COPY</button>
+        </div>
+      </div>
+      <button class="btn btn-green" onclick="fetchAPI('completes')" id="c-fetch-btn">
+        ✓ &nbsp;Fetch Completes
+      </button>
+    </div>
+    <div id="result-box-completes" class="result-box-shared" style="display:none;background:#060910;border:1px solid var(--border);border-radius:12px;padding:18px;max-height:360px;overflow-y:auto;">
+      <div id="result-header-completes" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span id="result-count-completes" style="font-size:12px;color:var(--muted);"></span>
+        <button class="copy-btn" id="res-copy-completes">COPY JSON</button>
+      </div>
+      <pre id="result-pre-completes" style="font-family:var(--mono);font-size:12px;color:#8bbcdd;white-space:pre-wrap;word-break:break-word;"></pre>
+    </div>
+  </section>
+
+  <!-- ── SCREEN OUTS ── -->
+  <section class="page" id="page-outs">
+    <div class="page-header">
+      <h2>Screen Outs <span class="tag red" style="vertical-align:middle;margin-left:8px;">Verification Only</span></h2>
+      <p>Fetch users who were screened out from surveys in a date range.</p>
+    </div>
+    <div class="alert warn">
+      <span class="alert-icon">⚠</span>
+      Max <strong>20,000 results</strong> per API call. Narrow your date range if you expect large volumes.
+    </div>
+    <div class="card">
+      <div class="row2">
+        <div class="field">
+          <label>Start Date</label>
+          <input type="date" id="o-start" value="2020-06-01" />
+        </div>
+        <div class="field">
+          <label>End Date</label>
+          <input type="date" id="o-end" value="2020-06-01" />
+        </div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Generated URL</div>
+        <div class="url-block">
+          <div class="url-text" id="o-url-display">—</div>
+          <button class="copy-btn" id="o-copy-btn" onclick="copyBtn(this, document.getElementById('o-url-display').innerText)">COPY</button>
+        </div>
+      </div>
+      <button class="btn btn-green" onclick="fetchAPI('outs')" id="o-fetch-btn">
+        ✕ &nbsp;Fetch Screen Outs
+      </button>
+    </div>
+    <div id="result-box-outs" class="result-box-shared" style="display:none;background:#060910;border:1px solid var(--border);border-radius:12px;padding:18px;max-height:360px;overflow-y:auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span id="result-count-outs" style="font-size:12px;color:var(--muted);"></span>
+        <button class="copy-btn" id="res-copy-outs">COPY JSON</button>
+      </div>
+      <pre id="result-pre-outs" style="font-family:var(--mono);font-size:12px;color:#8bbcdd;white-space:pre-wrap;word-break:break-word;"></pre>
+    </div>
+  </section>
+
+  <!-- ── VALIDATE ── -->
+  <section class="page" id="page-validate">
+    <div class="page-header">
+      <h2>Validate Transaction</h2>
+      <p>Check whether a transaction ID from a postback is legitimate before crediting a user.</p>
+    </div>
+    <div class="alert info">
+      <span class="alert-icon">ℹ</span>
+      Call this from your server whenever you receive a postback. If the transaction is invalid, <strong>do not credit</strong> the user.
+    </div>
+    <div class="card">
+      <div class="field">
+        <label>Transaction ID</label>
+        <input type="text" id="v-txid" placeholder="e.g. TX_abc123456" />
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Generated URL</div>
+        <div class="url-block">
+          <div class="url-text" id="v-url-display">—</div>
+          <button class="copy-btn" id="v-copy-btn" onclick="copyBtn(this, document.getElementById('v-url-display').innerText)">COPY</button>
+        </div>
+      </div>
+      <button class="btn btn-green" onclick="fetchAPI('validate')" id="v-fetch-btn">
+        ◎ &nbsp;Validate Transaction
+      </button>
+    </div>
+    <div id="result-box-validate" style="display:none;background:#060910;border:1px solid var(--border);border-radius:12px;padding:18px;max-height:360px;overflow-y:auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span id="result-count-validate" style="font-size:12px;color:var(--muted);"></span>
+        <button class="copy-btn" id="res-copy-validate">COPY JSON</button>
+      </div>
+      <pre id="result-pre-validate" style="font-family:var(--mono);font-size:12px;color:#8bbcdd;white-space:pre-wrap;word-break:break-word;"></pre>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const API_KEY = "6359e5f2de9cdff58131a70b4d515c50";
+const BASE    = "https://publisher.cpx-research.com/index.php";
+
+/* ── Navigation ── */
+function show(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  updateURL(id);
+}
+
+/* ── URL builders ── */
+function buildURL(type) {
+  if (type === 'completes') {
+    const s = document.getElementById('c-start').value;
+    const e = document.getElementById('c-end').value;
+    return `${BASE}?page=api-statistics-completes&start_time=${s}&end_time=${e}&api_key=${API_KEY}`;
+  }
+  if (type === 'outs') {
+    const s = document.getElementById('o-start').value;
+    const e = document.getElementById('o-end').value;
+    return `${BASE}?page=api-statistics-outs&start_time=${s}&end_time=${e}&api_key=${API_KEY}`;
+  }
+  if (type === 'validate') {
+    const tx = document.getElementById('v-txid').value || 'XXXXXX';
+    return `${BASE}?page=api-check-transaction-id&transaction_id=${tx}&api_key=${API_KEY}`;
+  }
+}
+
+function updateURL(type) {
+  const map = { completes: 'c', outs: 'o', validate: 'v' };
+  const prefix = map[type];
+  if (!prefix) return;
+  const el = document.getElementById(prefix + '-url-display');
+  if (el) el.textContent = buildURL(type);
+}
+
+/* ── Live URL update on input change ── */
+['c-start','c-end'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => updateURL('completes'));
+});
+['o-start','o-end'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => updateURL('outs'));
+});
+document.getElementById('v-txid').addEventListener('input', () => updateURL('validate'));
+
+/* ── Fetch ── */
+async function fetchAPI(type) {
+  const url = buildURL(type);
+  const btn = document.getElementById(
+    type === 'completes' ? 'c-fetch-btn' : type === 'outs' ? 'o-fetch-btn' : 'v-fetch-btn'
+  );
+  const resBox  = document.getElementById('result-box-' + type);
+  const resPre  = document.getElementById('result-pre-' + type);
+  const resCnt  = document.getElementById('result-count-' + type);
+  const resCopy = document.getElementById('res-copy-' + type);
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> &nbsp;Fetching…';
+  resBox.style.display = 'none';
+
+  try {
+    const res  = await fetch(url);
+    const text = await res.text();
+    let parsed;
+    try { parsed = JSON.parse(text); } catch { parsed = text; }
+
+    const pretty = JSON.stringify(parsed, null, 2);
+    resPre.textContent = pretty;
+
+    if (Array.isArray(parsed)) {
+      resCnt.textContent = `${parsed.length.toLocaleString()} records returned`;
+    } else {
+      resCnt.textContent = 'Response received';
+    }
+
+    resCopy.onclick = () => copyBtn(resCopy, pretty);
+    resBox.style.display = 'block';
+  } catch (err) {
+    resPre.textContent = '⚠ Request failed.\n\nThis is likely a CORS restriction — your browser blocks direct calls to the CPX API.\n\nCopy the Generated URL above and call it from your server-side code instead.\n\nError: ' + err.message;
+    resCnt.textContent = 'Error';
+    resBox.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = type === 'completes' ? '✓ &nbsp;Fetch Completes'
+                  : type === 'outs'      ? '✕ &nbsp;Fetch Screen Outs'
+                  : '◎ &nbsp;Validate Transaction';
+  }
+}
+
+/* ── Copy button ── */
+function copyBtn(el, text) {
+  navigator.clipboard?.writeText(text);
+  el.textContent = '✓ COPIED';
+  el.classList.add('copied');
+  setTimeout(() => {
+    el.textContent = el.id?.startsWith('res-copy') ? 'COPY JSON' : 'COPY';
+    el.classList.remove('copied');
+  }, 1500);
+}
+
+/* ── Init URL previews ── */
+updateURL('completes');
+updateURL('validate');
+</script>
+</body>
+</html>
